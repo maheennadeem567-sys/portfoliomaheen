@@ -9,35 +9,40 @@ export default function Contact() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
+    setErrorMsg('')
     setSuccess(false)
-    setError('')
 
-    if (!supabase) {
-      setError('Contact form is unavailable because Supabase is not configured.')
-      setLoading(false)
+    if (!name || !email || !message) {
+      setErrorMsg('Please fill in all fields.')
       return
     }
 
-    const { error: supabaseError } = await supabase
+    if (!supabase) {
+      setErrorMsg('Contact form is currently unavailable.')
+      return
+    }
+
+    setLoading(true)
+
+    const { error } = await supabase
       .from('contacts')
       .insert([{ name, email, message }])
 
-    if (supabaseError) {
-      setError(supabaseError.message)
-      setLoading(false)
-      return
-    }
-
-    setSuccess(true)
-    setName('')
-    setEmail('')
-    setMessage('')
     setLoading(false)
+
+    if (error) {
+      setErrorMsg('Something went wrong. Please try again.')
+      console.error('Supabase error:', error)
+    } else {
+      setSuccess(true)
+      setName('')
+      setEmail('')
+      setMessage('')
+    }
   }
 
   return (
@@ -133,7 +138,7 @@ export default function Contact() {
                 ></textarea>
               </div>
 
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
               {success && <p className="text-sm text-green-500">✅ Message sent successfully!</p>}
 
               <button

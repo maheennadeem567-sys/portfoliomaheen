@@ -17,6 +17,12 @@ export default function Contact() {
     setSuccess(false)
     setError('')
 
+    if (!supabase) {
+      setError('Contact form is unavailable because Supabase is not configured.')
+      setLoading(false)
+      return
+    }
+
     const { error: supabaseError } = await supabase
       .from('contacts')
       .insert([{ name, email, message }])

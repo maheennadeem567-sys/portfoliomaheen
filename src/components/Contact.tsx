@@ -145,13 +145,15 @@ export default function Contact() {
                 ></textarea>
               </div>
 
+              {!supabase && status !== 'error' && (
+                <p className="text-sm text-red-500">Contact form is currently unavailable. Missing Supabase configuration.</p>
+              )}
               {status === 'error' && errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
-              {!supabase && <p className="text-sm text-red-500">Contact form is currently unavailable. Missing Supabase configuration.</p>}
               {status === 'success' && <p className="text-sm text-green-500">✅ Message sent successfully!</p>}
 
               <button
                 onClick={handleSubmit}
-                disabled={status === 'loading'}
+                disabled={status === 'loading' || !supabase}
                 type="button"
                 style={{ cursor: 'pointer', pointerEvents: 'auto' }}
                 className="w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-pink-500 text-white transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] hover:-translate-y-1 disabled:opacity-60"

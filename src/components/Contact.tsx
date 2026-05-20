@@ -22,6 +22,12 @@ export default function Contact() {
 
     setLoading(true)
 
+    if (!supabase) {
+      setLoading(false)
+      setErrorMsg('Contact form is currently unavailable.')
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('contacts')

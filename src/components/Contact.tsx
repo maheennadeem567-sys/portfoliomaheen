@@ -13,6 +13,12 @@ export default function Contact() {
   const handleSubmit = async (e: React.MouseEvent | React.FormEvent) => {
     e.preventDefault()
 
+    if (!supabase) {
+      setErrorMessage('Contact form is currently unavailable.')
+      setStatus('error')
+      return
+    }
+
     if (!name.trim() || !email.trim() || !message.trim()) {
       setErrorMessage('Please fill in all fields.')
       setStatus('error')
@@ -33,20 +39,16 @@ export default function Contact() {
           }
         ])
 
-      if (error) {
-        console.error('Supabase insert error:', error)
-        setErrorMessage('Failed to send message. Please try again.')
-        setStatus('error')
-      } else {
-        setStatus('success')
-        setName('')
-        setEmail('')
-        setMessage('')
-      }
-    } catch (err) {
-      console.error('Unexpected error:', err)
-      setErrorMessage('Something went wrong. Please try again.')
+      if (error) throw error
+
+      setStatus('success')
+      setName('')
+      setEmail('')
+      setMessage('')
+    } catch (err: any) {
+      console.error('Error:', err?.message)
       setStatus('error')
+      setErrorMessage('Failed to send. Please try again.')
     }
   }
 
@@ -144,6 +146,7 @@ export default function Contact() {
               </div>
 
               {status === 'error' && errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+              {!supabase && <p className="text-sm text-red-500">Contact form is currently unavailable. Missing Supabase configuration.</p>}
               {status === 'success' && <p className="text-sm text-green-500">✅ Message sent successfully!</p>}
 
               <button

@@ -16,5 +16,11 @@ View your app in AI Studio: https://ai.studio/apps/7fd3bb81-2c31-4e2c-bf92-147c5
 1. Install dependencies:
    `npm install`
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Add Supabase client env vars to `.env.local` (replace with your project values):
+
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://lxuaesodajxxuhmrresl.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+   ```
 3. Run the app:
    `npm run dev`

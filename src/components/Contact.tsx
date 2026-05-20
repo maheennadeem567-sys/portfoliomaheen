@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Mail, Phone, Linkedin, Send } from 'lucide-react'
 import TiltCard from './ui/TiltCard'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase, hasSupabaseEnv } from '@/lib/supabaseClient'
 
 export default function Contact() {
   const [name, setName] = useState('')
@@ -11,8 +11,7 @@ export default function Contact() {
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     setErrorMsg('')
     setSuccess(false)
 
@@ -21,27 +20,31 @@ export default function Contact() {
       return
     }
 
-    if (!supabase) {
-      setErrorMsg('Contact form is currently unavailable.')
-      return
-    }
-
     setLoading(true)
 
-    const { error } = await supabase
-      .from('contacts')
-      .insert([{ name, email, message }])
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .insert([{ name, email, message }])
 
-    setLoading(false)
+      setLoading(false)
 
-    if (error) {
-      setErrorMsg('Something went wrong. Please try again.')
-      console.error('Supabase error:', error)
-    } else {
-      setSuccess(true)
-      setName('')
-      setEmail('')
-      setMessage('')
+      if (error) {
+        // Surface full error in the console for debugging
+        // eslint-disable-next-line no-console
+        console.error('Supabase error:', error)
+        setErrorMsg(error.message || 'Something went wrong. Please try again.')
+      } else {
+        setSuccess(true)
+        setName('')
+        setEmail('')
+        setMessage('')
+      }
+    } catch (err) {
+      setLoading(false)
+      // eslint-disable-next-line no-console
+      console.error('Unexpected error while sending contact:', err)
+      setErrorMsg('Unexpected error. Check console for details.')
     }
   }
 
@@ -101,7 +104,7 @@ export default function Contact() {
 
           {/* Form */}
           <div className="w-full">
-            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
               <div className="flex flex-col gap-2">
                 <label htmlFor="name" className="text-xs font-mono uppercase tracking-widest text-black dark:text-white opacity-80">Your Name</label>
                 <input
@@ -141,9 +144,14 @@ export default function Contact() {
               {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
               {success && <p className="text-sm text-green-500">✅ Message sent successfully!</p>}
 
+              {!hasSupabaseEnv && (
+                <p className="text-sm text-red-500">Contact form is currently unavailable. Missing Supabase configuration.</p>
+              )}
+
               <button
-                type="submit"
-                disabled={loading}
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading || !hasSupabaseEnv}
                 className="w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-pink-500 text-white transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] hover:-translate-y-1 disabled:opacity-60"
               >
                 <Send className="w-4 h-4" />

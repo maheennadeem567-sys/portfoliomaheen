@@ -1,56 +1,52 @@
 import React, { useState } from 'react'
 import { Mail, Phone, Linkedin, Send } from 'lucide-react'
 import TiltCard from './ui/TiltCard'
-import { supabase, hasSupabaseEnv } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function Contact() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [errorMsg, setErrorMsg] = useState('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSubmit = async () => {
-    setErrorMsg('')
-    setSuccess(false)
+  const handleSubmit = async (e: React.MouseEvent | React.FormEvent) => {
+    e.preventDefault()
 
-    if (!name || !email || !message) {
-      setErrorMsg('Please fill in all fields.')
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      setErrorMessage('Please fill in all fields.')
+      setStatus('error')
       return
     }
 
-    setLoading(true)
-
-    if (!supabase) {
-      setLoading(false)
-      setErrorMsg('Contact form is currently unavailable.')
-      return
-    }
+    setStatus('loading')
+    setErrorMessage('')
 
     try {
       const { error } = await supabase
         .from('contacts')
-        .insert([{ name, email, message }])
-
-      setLoading(false)
+        .insert([
+          {
+            name: name.trim(),
+            email: email.trim(),
+            message: message.trim()
+          }
+        ])
 
       if (error) {
-        // Surface full error in the console for debugging
-        // eslint-disable-next-line no-console
-        console.error('Supabase error:', error)
-        setErrorMsg(error.message || 'Something went wrong. Please try again.')
+        console.error('Supabase insert error:', error)
+        setErrorMessage('Failed to send message. Please try again.')
+        setStatus('error')
       } else {
-        setSuccess(true)
+        setStatus('success')
         setName('')
         setEmail('')
         setMessage('')
       }
     } catch (err) {
-      setLoading(false)
-      // eslint-disable-next-line no-console
-      console.error('Unexpected error while sending contact:', err)
-      setErrorMsg('Unexpected error. Check console for details.')
+      console.error('Unexpected error:', err)
+      setErrorMessage('Something went wrong. Please try again.')
+      setStatus('error')
     }
   }
 
@@ -147,21 +143,18 @@ export default function Contact() {
                 ></textarea>
               </div>
 
-              {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
-              {success && <p className="text-sm text-green-500">✅ Message sent successfully!</p>}
-
-              {!hasSupabaseEnv && (
-                <p className="text-sm text-red-500">Contact form is currently unavailable. Missing Supabase configuration.</p>
-              )}
+              {status === 'error' && errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+              {status === 'success' && <p className="text-sm text-green-500">✅ Message sent successfully!</p>}
 
               <button
-                type="button"
                 onClick={handleSubmit}
-                disabled={loading || !hasSupabaseEnv}
+                disabled={status === 'loading'}
+                type="button"
+                style={{ cursor: 'pointer', pointerEvents: 'auto' }}
                 className="w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-pink-500 text-white transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] hover:-translate-y-1 disabled:opacity-60"
               >
                 <Send className="w-4 h-4" />
-                {loading ? 'Sending...' : 'Send Message'}
+                {status === 'loading' ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           </div>
